@@ -4,7 +4,7 @@
 Plugin Name: LDS Quotes
 Plugin URI: http://www.mattlsmith.com
 Description: LDS Quotes 
-Version: 2.0.1
+Version: 2.0.2
 Author: Matt Smith 
 */
 
