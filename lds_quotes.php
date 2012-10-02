@@ -1,17 +1,16 @@
 <?php
-
 /*
 Plugin Name: LDS Quotes
 Plugin URI: http://www.mattlsmith.com
 Description: LDS Quotes 
-Version: 2.0.2
+Version: 2.0.3
 Author: Matt Smith 
 */
 
 register_activation_hook(__FILE__,'quotesInstall');
 
 add_action('admin_menu', 'quotesMenu');
-add_action('widgets_init', 'quotesRegisterWidget' );
+add_action('widgets_init', 'quotesRegisterWidget');
 
 add_filter("plugin_row_meta", 'quotesPluginLinks', 10, 2);
 
@@ -29,7 +28,7 @@ function quotesInstall() {
 	quotesUpdateCategories();
 }
 
-function quotesPluginLinks( $links, $file ) { 
+function quotesPluginLinks($links, $file) { 
 
 	$plugin = plugin_basename(__FILE__);
 
@@ -143,31 +142,35 @@ function ldsQuotes() {
 		return;
 	}
 
-	$url="http://www.quote.mattlsmith.com/get_quote.php?qu=" . urlencode(implode(':', $selectedCategories)) . '&allow_links=' . (quotesAllowLinks() ? '1' : '0');
+	$url="http://quote.mattlsmith.com/get_quote.php?qu=" . urlencode(implode(':', $selectedCategories)) . '&allow_links=' . (quotesAllowLinks() ? '1' : '0') . '&domain=' . urlencode($_SERVER['SERVER_NAME']);
 
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_HEADER, 0);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 4);
 	
 	$output = curl_exec($ch);
+
 	curl_close($ch);
-	
-	print_r($output);
-	
-	quotesSaveCache($selectedCategories, $output);
+
+	if($output !== false) {	
+
+		print_r($output);
+		quotesSaveCache($selectedCategories, $output);
+	}
 }
 
 function quotesMenu() {
 
-	add_options_page( 'LDS Quote Options', 'LDS Quotes', 'manage_options', 'lds-quotes', 'quotesSettings' );
+	add_options_page('LDS Quote Options', 'LDS Quotes', 'manage_options', 'lds-quotes', 'quotesSettings');
 }
 
 class quotesWidget extends WP_Widget {
 
 	function quotesWidget() {
 		// Instantiate the parent object
-		parent::__construct( false, 'LDS Quotes' );
+		parent::__construct(false, 'LDS Quotes');
 	}
 
 	function widget($args, $instance) {
@@ -212,7 +215,7 @@ function quotesUpdateSelectedCategories($categories) {
 
 function quotesUpdateCategories() {
 
-	$url="http://www.quote.mattlsmith.com/update.php?qu=&site=";
+	$url="http://quote.mattlsmith.com/update.php?qu=&site=";
 
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -231,6 +234,8 @@ function quotesGetCached($selectedCategories) {
 	if($time > time() - 60*5) {
 		return get_option('quoteCached' . serialize($selectedCategories));
 	}
+
+	return false;
 }
 
 function quotesSaveCache($selectedCategories, $output) {
